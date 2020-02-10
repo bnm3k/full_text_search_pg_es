@@ -5,5 +5,9 @@
   "main": "index.js",
   "repository": "github.com/nagamocha3000/full_text_search_pg_es",
   "author": "nagamocha",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "app-root-path": "^3.0.0",
+    "cheerio": "0.22.0"
+  }
 }
