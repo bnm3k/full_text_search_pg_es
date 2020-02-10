@@ -1,0 +1,9 @@
+{
+  "name": "es_pg_search_tool",
+  "version": "1.0.0",
+  "description": "clis to compare search from postgres full text search and elasticsearch",
+  "main": "index.js",
+  "repository": "github.com/nagamocha3000/full_text_search_pg_es",
+  "author": "nagamocha",
+  "license": "MIT"
+}
