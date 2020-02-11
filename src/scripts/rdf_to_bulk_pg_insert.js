@@ -2,7 +2,7 @@
 const { path: appRootPath } = require("app-root-path");
 const path = require("path");
 const dir = require("node-dir");
-const { parseRDF } = require("../src/utils/parseRDF");
+const { parseRDF } = require("../utils/parseRDF");
 
 const rdfdirpath =
     process.argv[2] || path.resolve(appRootPath, "data/cache/epub/");

@@ -1,6 +1,6 @@
 "use strict";
 const { path: appRootPath } = require("app-root-path");
-const { parseRDF } = require("../src/utils/parseRDF");
+const { parseRDF } = require("../utils/parseRDF");
 const path = require("path");
 const fs = require("fs");
 

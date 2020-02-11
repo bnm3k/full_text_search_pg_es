@@ -110,3 +110,5 @@ temp/
 
 # End of https://www.gitignore.io/api/node
 data/
+bin/es/
+.DS_Store
