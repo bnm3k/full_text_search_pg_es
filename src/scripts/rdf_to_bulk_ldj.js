@@ -3,7 +3,7 @@ const { path: appRootPath } = require("app-root-path");
 const path = require("path");
 const dir = require("node-dir");
 const fs = require("fs");
-const { parseRDF } = require("../src/utils/parseRDF");
+const { parseRDF } = require("../utils/parseRDF");
 
 const fileLDJElasticsearch = fs.createWriteStream(
     path.join(appRootPath, "data/bulk_es.ldj")
@@ -13,7 +13,7 @@ const rdfdirpath =
     process.argv[2] || path.resolve(appRootPath, "data/cache/epub/");
 
 const options = {
-    match: /pg1.\.rdf$/,
+    match: /\.rdf$/,
     exclude: ["pg0.rdf"]
 };
 

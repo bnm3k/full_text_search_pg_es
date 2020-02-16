@@ -8,10 +8,14 @@
     "license": "MIT",
     "dependencies": {
         "app-root-path": "^3.0.0",
+        "chalk": "^3.0.0",
         "cheerio": "0.22.0",
-        "node-dir": "^0.1.17"
+        "commander": "^4.1.1",
+        "node-dir": "^0.1.17",
+        "request": "^2.88.2"
     },
     "scripts": {
-        "elasticsearch": "bin/es/bin/elasticsearch"
+        "es": "bin/es/bin/elasticsearch",
+        "start": "node src/search_es.js"
     }
 }

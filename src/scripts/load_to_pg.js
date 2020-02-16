@@ -18,11 +18,12 @@ dir.readFiles(
     function(err, content, next) {
         if (err) throw err;
         const doc = parseRDF(content);
+        const docJSON = JSON.stringify(doc);
         console.log("insert to postgres");
         next();
     },
     function(err) {
         if (err) throw err;
-        fileLDJElasticsearch.close();
+        console.log("done inserting to postgres");
     }
 );
