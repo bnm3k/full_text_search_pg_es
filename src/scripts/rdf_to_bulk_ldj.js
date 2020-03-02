@@ -3,7 +3,7 @@ const { path: appRootPath } = require("app-root-path");
 const path = require("path");
 const dir = require("node-dir");
 const fs = require("fs");
-const { parseRDF } = require("../utils/parseRDF");
+const { parseRDF } = require("../lib/parseRDF");
 
 const fileLDJElasticsearch = fs.createWriteStream(
     path.join(appRootPath, "data/bulk_es.ldj")
