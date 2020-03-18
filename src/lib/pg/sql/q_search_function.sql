@@ -23,6 +23,7 @@ as $$
         group by book_id
     ) a using(book_id)
     where search @@ ts.query
-    order by rank desc;
+    order by rank desc
+    limit 10;
 $$;
 
