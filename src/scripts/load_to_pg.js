@@ -13,22 +13,48 @@ const options = {
     exclude: ["pg0.rdf"]
 };
 
-dir.readFiles(
-    rdfdirpath,
-    options,
-    function(err, content, next) {
-        if (err) throw err;
-        const doc = parseRDF(content);
-        const docJSON = JSON.stringify(doc);
-        db.query(
-            "insert into books(details) values ($1) returning 't'::boolean",
-            [docJSON]
-        )
-            .then(() => next())
-            .catch(err => next(err));
-    },
-    function(err) {
-        if (err) throw err;
-        console.log("done inserting to postgres");
+const insertBookMetadata = client => {
+    return new Promise((resolve, reject) => {
+        dir.readFiles(
+            rdfdirpath,
+            options,
+            function(err, content, next) {
+                if (err) return reject(err);
+                const doc = parseRDF(content);
+                const docJSON = JSON.stringify(doc);
+                client
+                    .query(
+                        "insert into books(details) values ($1) returning 't'::boolean",
+                        [docJSON]
+                    )
+                    .then(() => next())
+                    .catch(reject);
+            },
+            function(err) {
+                if (err) reject(err);
+                else resolve();
+            }
+        );
+    });
+};
+
+const main = async () => {
+    const client = await db.getClient();
+    try {
+        await client.query("begin");
+        const res = await insertBookMetadata(client);
+        await client.query("commit");
+        console.log(
+            `Completed insertion of Project Gutenberg book metadata to Postgres`
+        );
+    } catch (err) {
+        await client.query("rollback");
+        console.error(err);
+    } finally {
+        process.exit();
     }
-);
+};
+
+main().catch(err => {
+    console.error(err);
+});
