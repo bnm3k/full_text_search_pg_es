@@ -10,6 +10,7 @@
         "app-root-path": "^3.0.0",
         "chalk": "^3.0.0",
         "cheerio": "0.22.0",
+        "cli-table": "^0.3.1",
         "commander": "^4.1.1",
         "dotenv": "^8.2.0",
         "node-dir": "^0.1.17",
