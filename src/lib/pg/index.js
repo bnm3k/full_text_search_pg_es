@@ -14,17 +14,7 @@ const getClient = () => pool.connect();
 
 const query = (text, params) => pool.query(text, params);
 
-const searchCatalog = async searchPhrase => {
-    const { rows } = await query(
-        "select book_details from search_catalog($1)",
-        [searchPhrase]
-    );
-    const results = rows.map(row => row.book_details);
-    return results;
-};
-
 module.exports = {
     query,
-    searchCatalog,
     getClient
 };
