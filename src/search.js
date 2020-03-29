@@ -88,7 +88,7 @@ const searchPerformanceComparison = async (searchPhrases = [], retakes = 0) => {
     do {
         for (let entry of perfs) {
             const res = await Promise.all(
-                ["pg", "pg"].map(db => search(db, entry.phrase))
+                ["es", "pg"].map(db => search(db, entry.phrase))
             );
             entry.esTimings.push(res[0].timeTaken);
             entry.pgTimings.push(res[1].timeTaken);
@@ -112,7 +112,7 @@ const searchPerformanceComparison = async (searchPhrases = [], retakes = 0) => {
 const fmtSearchPerfComparison = perfs => {
     const perfsTable = new Table({
         head: ["phrase", "(ESmin, PGmin)", "(ESmax, PGmax)", "esAve", "pgAve"],
-        colWidths: [20, 20, 20, 10, 10]
+        colWidths: [20, 20, 20, 15, 15]
     });
 
     perfs.forEach(p =>
@@ -120,8 +120,8 @@ const fmtSearchPerfComparison = perfs => {
             p.phrase,
             `(${p.es.min}, ${p.pg.min})`,
             `(${p.es.max}, ${p.pg.max})`,
-            p.es.ave,
-            p.pg.ave
+            p.es.ave.toFixed(2),
+            p.pg.ave.toFixed(2)
         ])
     );
 
@@ -139,6 +139,11 @@ program
     .option(
         "-f, --file [filepath]",
         "provide path to text file from which a list of search phrases is read from"
+    )
+    .option(
+        "-r, --retakes [retake_num]",
+        "number of times to repeat searches for performance comparison",
+        2
     );
 
 //SEARCH
@@ -172,7 +177,7 @@ program
         const filePath =
             program.file || path.join(path.dirname(__filename), "phrases.txt");
         const searchPhrases = searchPhrasesFromFile(filePath);
-        const retakes = 1;
+        const retakes = Number(program.retakes);
         const perfs = await searchPerformanceComparison(searchPhrases, retakes);
         const fmtdPerfs = fmtSearchPerfComparison(perfs);
         console.log(fmtdPerfs);
