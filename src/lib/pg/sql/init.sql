@@ -1,43 +1,43 @@
 begin;
+
 --store book details
-drop table if exists books;
-create table books(
-    details jsonb not null
+drop table if exists book;
+create table book(
+    book_id int primary key,
+    details jsonb not null,
     search tsvector not null
 );
 
-create index idx_books_details on books using GIN(details jsonb_path_ops);
-create index idx_books_search on books using GIN(search);
-
-
---for search
+--for search insert
 drop function if exists trig_books_set_search_fn();
 create or replace function trig_books_set_search_fn()
     returns trigger 
     language 'plpgsql'
 as $$
+declare
+    book_id int;
 begin
-    new.search = to_tsvector('english', concat(
-        new.details->>'title', 
-        new.details->>'authors', 
-        new.details->>'subjects'));
+    select cast(new.details->>'id' as integer) into book_id;
+    new.book_id = book_id;
+    new.search =
+        setweight( to_tsvector('english', new.details->>'title'   ), 'A' ) ||
+        setweight( to_tsvector('simple' , new.details->>'authors' ), 'A' ) ||
+        setweight( to_tsvector('english', new.details->>'subjects'), 'D' );
     return new;
 end;
 $$;
 drop trigger if exists trig_books_set_search on books;
 create trigger trig_books_set_search
-    before insert on books for each row 
+    before insert on book for each row 
     execute procedure trig_books_set_search_fn();
 
---search
-drop function if exists search_books(varchar);
-create or replace function search_books(query varchar)
-    returns table(details jsonb, rank real)
-    language 'sql'
-as $$
-    select details, ts_rank_cd(search, to_tsquery(query)) as rank
-        from books 
-        order by rank desc;
-$$;
+-- insert into book(details)
+-- values ('{"id":10005,"title":"A Voyage to the Moon\r\nWith Some Account of the Manners and Customs, Science and Philosophy, of the People of Morosofia, and Other Lunarians","authors":["Tucker, George"],"subjects":["Science fiction","Space flight to the moon -- Fiction"]}')
+-- on conflict do nothing;
+
+-- select * from book;
+
+--create index idx_book_details on books using GIN(details jsonb_path_ops);
+--create index idx_book_search on books using GIN(search);
 
 commit;

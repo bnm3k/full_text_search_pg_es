@@ -13,7 +13,7 @@ const options = {
     exclude: ["pg0.rdf"]
 };
 
-const insertBookMetadata = client => {
+const insertBooks = client => {
     return new Promise((resolve, reject) => {
         dir.readFiles(
             rdfdirpath,
@@ -24,7 +24,7 @@ const insertBookMetadata = client => {
                 const docJSON = JSON.stringify(doc);
                 client
                     .query(
-                        "insert into books(details) values ($1) returning 't'::boolean",
+                        "insert into book(details) values ($1) on conflict do nothing returning 't'::boolean",
                         [docJSON]
                     )
                     .then(() => next())
@@ -42,7 +42,7 @@ const main = async () => {
     const client = await db.getClient();
     try {
         await client.query("begin");
-        const res = await insertBookMetadata(client);
+        const res = await insertBooks(client);
         await client.query("commit");
         console.log(
             `Completed insertion of Project Gutenberg book metadata to Postgres`
