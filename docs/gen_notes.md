@@ -149,3 +149,18 @@ The goal here is to provide a different means of querying categories rather than
 Project-gutenberg keeps on adding books. My update strategy so far bears the following assumptions, books already inserted are not modified, updates will be done once in a while eg once every 1 week. We have to download each book again.
 
 The simplest approach is to use a `trigger` to update the search whenever a book is inserted or updated
+
+### TODO
+
+1. Multiple Phrase Search in PostgreSQL: https://www.monkeyatlarge.com/archives/2010/01/17/multiple-phrase-search-in-postgresql/
+
+2. Understanding Full Text Search in PostgreSQL: https://linuxgazette.net/164/sephton.html
+
+3. Fine Tuning Full Text Search with PostgreSQL 12: https://rob.conery.io/2019/10/29/fine-tuning-full-text-search-with-postgresql-12/
+
+## REFERENCES
+
+1. The State of (Full) Text Search in PostgreSQL 12: https://fosdem.org/2020/schedule/event/postgresql_the_state_of_full_text_search_in_postgresql_12/
+2. The RUM index and Full-Text Search Using PostgreSQL: https://medium.com/datadriveninvestor/the-rum-index-and-full-text-search-using-postgresql-1c08fb3bf540
+3. Similarity Analysis for PostgreSQL Text Databases: https://www.alibabacloud.com/blog/similarity-analysis-for-postgresql-text-databases_595341
+4. GiST and GIN Index Types: https://www.postgresql.org/docs/9.1/textsearch-indexes.htm
