@@ -13,13 +13,22 @@ const exitWithMessage = msg => {
     process.exit();
 };
 
-const searchPG = async searchPhrase => {
-    const res = await pg.query("select book_details from search_catalog($1)", [
-        searchPhrase
-    ]);
-    const hits = res.rows.map(row => row.book_details);
-    return hits;
-};
+const searchPG = (() => {
+    const searchQuery = `
+        select
+            details,
+            ts_rank(search, ts.query)::numeric(10,3) as relevance
+        from
+            (select websearch_to_tsquery('english',$1)||websearch_to_tsquery('simple',$1) as query) as ts,
+            book 
+        where book.search @@ ts.query
+        order by relevance desc limit 10;`;
+    return async searchPhrase => {
+        const res = await pg.query(searchQuery, [searchPhrase]);
+        const hits = res.rows.map(row => row.details);
+        return hits;
+    };
+})();
 
 const searchES = searchPhrase =>
     new Promise((resolve, reject) => {
@@ -95,18 +104,22 @@ const searchPerformanceComparison = async (searchPhrases = [], retakes = 0) => {
         }
     } while (retakes-- > 0);
 
+    const arrSum = arr => arr.reduce((a, b) => a + b, 0);
     const stats = (arr = []) => ({
         max: Math.max(...arr),
         min: Math.min(...arr),
-        ave: arr.reduce((a, b) => a + b, 0) / arr.length
+        ave: arrSum(arr) / arr.length
     });
 
     const perfsWithStats = perfs.map(p => ({
         phrase: p.phrase,
-        es: { timings: p.esTimings, ...stats(p.esTimings) },
-        pg: { timings: p.pgTimings, ...stats(p.pgTimings) }
+        es: { timings: p.esTimings, ...stats(p.esTimings.slice(1)) },
+        pg: { timings: p.pgTimings, ...stats(p.pgTimings.slice(1)) }
     }));
-    return perfsWithStats;
+    const sumOfAveragesES = arrSum(perfsWithStats.map(p => p.es.ave));
+    const sumOfAveragesPG = arrSum(perfsWithStats.map(p => p.pg.ave));
+
+    return { perfs: perfsWithStats, sumOfAveragesES, sumOfAveragesPG };
 };
 
 const fmtSearchPerfComparison = perfs => {
@@ -142,8 +155,8 @@ program
     )
     .option(
         "-r, --retakes [retake_num]",
-        "number of times to repeat searches for performance comparison",
-        2
+        "number of times to repeat searches for performance comparison, minimum 1",
+        5
     );
 
 //SEARCH
@@ -168,9 +181,30 @@ program
         console.log(`Time Taken: ${res.timeTaken} ms`);
     });
 
+//SEARCH
+program
+    .command("get_book [id]")
+    .alias("q")
+    .description("perform search query")
+    .action(async bookID => {
+        if (!bookID) exitWithMessage("provide book ID");
+        try {
+            const book = (
+                await pg.query("select details from book where book_id = $1", [
+                    bookID
+                ])
+            ).rows[0];
+            if (!book)
+                exitWithMessage(`Book with ID "${bookID}" does not exist`);
+            else console.log(book.details);
+        } catch (err) {
+            console.error(err.message);
+        }
+    });
+
 //PERFORMANCE COMPARISON
 program
-    .command("compare_perf [foo...]")
+    .command("compare_perf")
     .alias("c")
     .description("perform search query")
     .action(async () => {
@@ -178,9 +212,12 @@ program
             program.file || path.join(path.dirname(__filename), "phrases.txt");
         const searchPhrases = searchPhrasesFromFile(filePath);
         const retakes = Number(program.retakes);
-        const perfs = await searchPerformanceComparison(searchPhrases, retakes);
-        const fmtdPerfs = fmtSearchPerfComparison(perfs);
+        if (retakes < 1) exitWithMessage(`retakes minimum is 1`);
+        const res = await searchPerformanceComparison(searchPhrases, retakes);
+        const fmtdPerfs = fmtSearchPerfComparison(res.perfs);
         console.log(fmtdPerfs);
+        console.log(`ES ave total: ${res.sumOfAveragesES}`);
+        console.log(`PG ave total: ${res.sumOfAveragesPG}`);
     });
 
 const main = async () => {
