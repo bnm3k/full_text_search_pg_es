@@ -115,4 +115,4 @@ bin/es/
 bin/
 
 #sql files
-foo.sql
+*foo*

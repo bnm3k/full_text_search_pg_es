@@ -15,14 +15,18 @@ const exitWithMessage = msg => {
 
 const searchPG = (() => {
     const searchQuery = `
-        select
-            details,
-            ts_rank(search, ts.query)::numeric(10,3) as relevance
-        from
-            (select websearch_to_tsquery('english',$1)||websearch_to_tsquery('simple',$1) as query) as ts,
-            book 
-        where book.search @@ ts.query
-        order by relevance desc limit 10;`;
+    select
+        details,
+        ts_rank(search, ts.query)::numeric(10,3) as relevance
+    from
+        (select  
+            websearch_to_tsquery('english',$1) ||
+            websearch_to_tsquery('simple',$1) ||
+            websearch_to_tsquery('simple', replace($1, ' ', ' or ')) query
+        ) as ts,
+        book 
+    where book.search @@ ts.query
+    order by relevance desc limit 10;`;
     return async searchPhrase => {
         const res = await pg.query(searchQuery, [searchPhrase]);
         const hits = res.rows.map(row => row.details);
@@ -54,6 +58,7 @@ const search = async (db, searchPhrase) => {
     else throw new Error(`Invalid db option ${db}, select either pg or es`);
     const stop = Date.now();
     return {
+        db,
         hits,
         timeTaken: stop - start
     };
@@ -153,6 +158,7 @@ program
         "-f, --file [filepath]",
         "provide path to text file from which a list of search phrases is read from"
     )
+    .option("-j, --json", "output seach results as json array")
     .option(
         "-r, --retakes [retake_num]",
         "number of times to repeat searches for performance comparison, minimum 1",
@@ -173,12 +179,15 @@ program
             exitWithMessage(
                 `error: option '-d, --db [database]' must be either of [pg, es]`
             );
-        const res = await search(program.db, queries.join(" "));
-        const fmtdHits = fmtSearchResults(res.hits);
 
-        console.log(`DB: ${program.db}`);
-        console.log(fmtdHits);
-        console.log(`Time Taken: ${res.timeTaken} ms`);
+        const res = await search(program.db, queries.join(" "));
+        if (program.json) console.log(JSON.stringify(res));
+        else {
+            const fmtdHits = fmtSearchResults(res.hits);
+            console.log(`DB: ${res.db}`);
+            console.log(fmtdHits);
+            console.log(`Time Taken: ${res.timeTaken} ms`);
+        }
     });
 
 //SEARCH
